@@ -174,9 +174,7 @@ with col4:
 # Coluna vazia para separar visualmente
 with col5:
     st.metric("VGV Previsto", f"R$ {receita_media_formatada}")
-    
-with col6:
-    st.metric("Receita Prevista", f"R$ {receita_media_formatada}")
+
 
 st.markdown("---")
 # Exibindo os gráficos
