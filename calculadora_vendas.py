@@ -73,7 +73,7 @@ num_leads_novos = st.sidebar.number_input('Número de Leads:', min_value=1, step
 
 st.sidebar.header('Dados de Imóveis')
 num_imoveis_disponiveis_novos = st.sidebar.number_input('Estoque de Imóveis:', min_value=1, step=1, value=num_imoveis_disponiveis)
-vgv_imovel_novo = st.sidebar.number_input('VGV (R$):', min_value=0, step=10000, value=vgv_imovel)
+vgv_imovel_novo = st.sidebar.number_input('VGV Médio por Imóvel (R$):', min_value=0, step=10000, value=vgv_imovel)
 
 X_novo = pd.DataFrame({
     'num_corretores': [num_corretores_novos],
@@ -155,8 +155,8 @@ vgv_imovel_novo_formatada = "{:,.2f}".format(vgv_imovel_novo).replace(",", ";").
 # Exibindo os resultados
 st.markdown("---")
 # Divisão das colunas em duas linhas
-col1, col2, col3 = st.columns([1, 1, 1])
-col4, col5, col6 = st.columns([1, 1, 1])
+col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+col5, col6, col7, col8 = st.columns([1.5, 1.5, 1, 1])
 
 # Preenchendo as colunas com as métricas
 with col1:
@@ -166,18 +166,17 @@ with col2:
     st.metric("N° de Vendas Previstas", num_imoveis_previstos)
 
 with col3:
-    st.metric("Leads por Corretor", num_leads_novos/num_corretores_novos)
+    st.metric("Média de Leads por Corretor", round(num_leads_novos/num_corretores_novos))
 
 with col4:
-    st.metric("VGV", f"R$ {vgv_imovel_novo:,.2f}".replace(",", ";").replace(".", ",").replace(";", "."))
-
-with col5:
-    st.metric("Receita Prevista", f"R$ {receita_media_formatada}")
+    st.metric(" Média de Imóveis por Corretor", int(num_imoveis_disponiveis_novos/num_corretores_novos))
 
 # Coluna vazia para separar visualmente
+with col5:
+    st.metric("VGV Previsto", f"R$ {receita_media_formatada}")
+    
 with col6:
-    pass
-
+    st.metric("Receita Prevista", f"R$ {receita_media_formatada}")
 
 st.markdown("---")
 # Exibindo os gráficos
