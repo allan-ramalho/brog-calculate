@@ -9,7 +9,11 @@ import numpy as np
 import locale
 
 # Configuração da formatação
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+try:
+    locale.setlocale(locale.LC_ALL, 'pt_BR.utf8')
+except locale.Error:
+    locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
+
 
 # Configurações iniciais do Streamlit
 st.set_page_config(
