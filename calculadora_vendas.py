@@ -14,6 +14,9 @@ st.set_page_config(
     page_icon="🏢",
     layout="wide",
 )
+# #Estlização do Streamlit Utilizando CSS e HTML
+# with open("style.css") as f:
+#     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html = True)
 # Dados fornecidos
 num_corretores = 10
 num_imoveis_disponiveis = 350
@@ -174,7 +177,7 @@ with col4:
 # Coluna vazia para separar visualmente
 with col5:
     st.metric("VGV Previsto", f"R$ {receita_media_formatada}")
-
+    
 
 st.markdown("---")
 # Exibindo os gráficos
