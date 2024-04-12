@@ -86,7 +86,7 @@ X_novo = pd.DataFrame({
     'vgv_imovel': [vgv_imovel_novo]  
 })
 num_imoveis_previstos_novos = model.predict(X_novo)[0]
-
+num_imoveis_previstos_novos = int(0.9 * num_corretores_novos + 0.001 * num_imoveis_disponiveis_novos + 0.001 * num_leads_novos + 5 * taxa_venda + 0.000001 * vgv_imovel_novo)
 # Seleção do mês
 mes_selecionado = st.sidebar.selectbox('Selecione o Mês:', list(meses.keys()))
 
