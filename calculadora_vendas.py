@@ -6,13 +6,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import numpy as np
-import locale
-
-# Configuração da formatação
-try:
-    locale.setlocale(locale.LC_ALL, 'pt_BR.utf8')
-except locale.Error:
-    locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
 
 
 # Configurações iniciais do Streamlit
@@ -152,30 +145,39 @@ fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Mí
 fig_receita.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
 fig_receita.update_layout(title='Receita Prevista por Mês', xaxis_title='Mês', yaxis_title='Receita (R$)')
 
+
 # Formatação dos números
-receita_min_formatada = locale.currency(receita_min, grouping=True)
-receita_media_formatada = locale.currency(receita_media, grouping=True)
-receita_max_formatada = locale.currency(receita_max, grouping=True)
+receita_min_formatada = "{:,.2f}".format(receita_min).replace(",", ";").replace(".", ",").replace(";", ".")
+receita_media_formatada = "{:,.2f}".format(receita_media).replace(",", ";").replace(".", ",").replace(";", ".")
+receita_max_formatada = "{:,.2f}".format(receita_max).replace(",", ";").replace(".", ",").replace(";", ".")
+vgv_imovel_novo_formatada = "{:,.2f}".format(vgv_imovel_novo).replace(",", ";").replace(".", ",").replace(";", ".")
 
 # Exibindo os resultados
 st.markdown("---")
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+# Divisão das colunas em duas linhas
+col1, col2, col3 = st.columns([1, 1, 1])
+col4, col5, col6 = st.columns([1, 1, 1])
 
+# Preenchendo as colunas com as métricas
 with col1:
-    st.metric("Mês Selecionado", 
-          mes_selecionado)
+    st.metric("Mês Selecionado", mes_selecionado)
+
 with col2:
-    st.metric("N° de Vendas Previstas", 
-          num_imoveis_previstos)
+    st.metric("N° de Vendas Previstas", num_imoveis_previstos)
+
+with col3:
+    st.metric("Leads por Corretor", num_leads_novos/num_corretores_novos)
+
 with col4:
-    st.metric("VGV", 
-          locale.currency(vgv_imovel_novo, grouping=True))    
+    st.metric("VGV", f"R$ {vgv_imovel_novo:,.2f}".replace(",", ";").replace(".", ",").replace(";", "."))
+
 with col5:
-    st.metric("Receita Prevista", 
-          receita_media_formatada)
+    st.metric("Receita Prevista", f"R$ {receita_media_formatada}")
+
+# Coluna vazia para separar visualmente
 with col6:
-    st.metric("Leads por Corretor", 
-          num_leads_novos/num_corretores_novos)
+    pass
+
 
 st.markdown("---")
 # Exibindo os gráficos
