@@ -157,6 +157,10 @@ vgv_imovel_novo_formatada = "{:,.2f}".format(vgv_imovel_novo).replace(",", ";").
 
 # Exibindo os resultados
 st.markdown("---")
+# Calcular a média de leads por corretor
+media_leads_por_corretor = int(num_leads_novos / num_corretores_novos)
+media_imoveis_por_corretor = int(num_imoveis_disponiveis_novos/num_corretores_novos)
+
 # Divisão das colunas em duas linhas
 col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
 col5, col6, col7, col8 = st.columns([1.5, 1.5, 1, 1])
@@ -168,11 +172,36 @@ with col1:
 with col2:
     st.metric("N° de Vendas Previstas", num_imoveis_previstos)
 
+# Exibir o card com a cor definida
 with col3:
-    st.metric("Média de Leads por Corretor", round(num_leads_novos/num_corretores_novos))
+    if 15 <= int(num_leads_novos / num_corretores_novos) <= 20:
+        st.write(f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
+                 f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
+                 '</div>', unsafe_allow_html=True)
+    elif int(num_leads_novos / num_corretores_novos) > 20:
+        st.write(f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
+                 f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
+                 '</div>', unsafe_allow_html=True)
+    else:
+        st.metric("Média de Leads por Corretor", int(num_leads_novos / num_corretores_novos))
 
 with col4:
-    st.metric(" Média de Imóveis por Corretor", int(num_imoveis_disponiveis_novos/num_corretores_novos))
+    with st.container():
+        if 15 <= int(num_imoveis_disponiveis_novos/num_corretores_novos) <= 20:
+            st.markdown(
+                f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
+                f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
+                '</div>', unsafe_allow_html=True)
+        elif int(num_imoveis_disponiveis_novos/num_corretores_novos) > 20:
+            st.markdown(
+                f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
+                f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
+                '</div>', unsafe_allow_html=True)
+        else:
+            st.metric("Média de Imóveis por Corretor", int(num_imoveis_disponiveis_novos/num_corretores_novos))
+
+# with col4:
+#     st.metric(" Média de Imóveis por Corretor", )
 
 # Coluna vazia para separar visualmente
 with col5:
