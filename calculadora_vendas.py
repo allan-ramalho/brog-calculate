@@ -51,7 +51,7 @@ num_imoveis_previstos = model.predict(X)[0]
 st.image("https://www.brognoli.com.br/uploads/logo_0133f73122cb718033a0ef27fe067d10.svg", width=100)
 
 # Título da aplicação
-st.title('Calculadora Imobiliária - Lançamentos')
+st.title('Calculadora Imobiliária🏢')
 
 # Dicionário de fatores de sazonalidade
 meses = {
@@ -70,148 +70,444 @@ meses = {
 }
 
 # Interface da calculadora
-st.sidebar.header('Dados do Grupo')
-num_corretores_novos = st.sidebar.number_input('Número de Corretores:', min_value=1, step=1, value=num_corretores)
-num_leads_novos = st.sidebar.number_input('Número de Leads:', min_value=1, step=1, value=num_leads, help='Número de leads qualificados com score >= 6')
+st.sidebar.header('Vertical de Negócios')
+opcoes = ["Lançamentos", "Vendas", "Preços"]
+opcao_selecionada  = st.sidebar.radio("Modelos", opcoes)
+if opcao_selecionada == 'Lançamentos':
+    st.sidebar.header('Dados do Grupo')
+    num_corretores_novos = st.sidebar.number_input('Número de Corretores:', min_value=1, step=1, value=10)
+    num_leads_novos = st.sidebar.number_input('Número de Leads:', min_value=1, step=1, value=num_leads, help='Número de leads qualificados com score >= 6')
 
-st.sidebar.header('Dados de Imóveis')
-num_imoveis_disponiveis_novos = st.sidebar.number_input('Estoque de Imóveis:', min_value=1, step=1, value=num_imoveis_disponiveis)
-vgv_imovel_novo = st.sidebar.number_input('VGV Médio por Imóvel (R$):', min_value=0, step=10000, value=vgv_imovel)
+    st.sidebar.header('Dados de Imóveis')
+    num_imoveis_disponiveis_novos = st.sidebar.number_input('Estoque de Imóveis:', min_value=1, step=1, value=num_imoveis_disponiveis)
+    vgv_imovel_novo = st.sidebar.number_input('VGV Médio por Imóvel (R$):', min_value=0, step=10000, value=vgv_imovel)
 
-X_novo = pd.DataFrame({
-    'num_corretores': [num_corretores_novos],
-    'num_imoveis_disponiveis': [num_imoveis_disponiveis_novos],
-    'num_leads': [num_leads_novos],
-    'taxa_venda': [taxa_venda],  
-    'vgv_imovel': [vgv_imovel_novo]  
-})
-num_imoveis_previstos_novos = model.predict(X_novo)[0]
-num_imoveis_previstos_novos = int(0.9 * num_corretores_novos + 0.001 * num_imoveis_disponiveis_novos + 0.001 * num_leads_novos + 5 * taxa_venda + 0.000001 * vgv_imovel_novo)
-# Seleção do mês
-mes_selecionado = st.sidebar.selectbox('Selecione o Mês:', list(meses.keys()))
+    X_novo = pd.DataFrame({
+        'num_corretores': [num_corretores_novos],
+        'num_imoveis_disponiveis': [num_imoveis_disponiveis_novos],
+        'num_leads': [num_leads_novos],
+        'taxa_venda': [taxa_venda],  
+        'vgv_imovel': [vgv_imovel_novo]  
+    })
+    num_imoveis_previstos_novos = model.predict(X_novo)[0]
+    num_imoveis_previstos_novos = int(0.9 * num_corretores_novos + 0.001 * num_imoveis_disponiveis_novos + 0.001 * num_leads_novos + 5 * taxa_venda - 0.000001 * vgv_imovel_novo)+1
+    # Seleção do mês
+    mes_selecionado = st.sidebar.selectbox('Selecione o Mês:', list(meses.keys()))
 
-# Cálculo do fator de sazonalidade
-fator_sazonalidade = meses[mes_selecionado]
+    # Cálculo do fator de sazonalidade
+    fator_sazonalidade = meses[mes_selecionado]
 
-# Previsão do número de imóveis vendidos e receita
-num_imoveis_previstos = int(num_imoveis_previstos_novos * fator_sazonalidade) #int(sum(prever_num_imoveis(valores_imoveis, num_imoveis_disponiveis)) * fator_sazonalidade / 10000)
+    # Previsão do número de imóveis vendidos e receita
+    num_imoveis_previstos = int(num_imoveis_previstos_novos * fator_sazonalidade) #int(sum(prever_num_imoveis(valores_imoveis, num_imoveis_disponiveis)) * fator_sazonalidade / 10000)
 
-# Cálculo da receita
-vgv_por_imovel = vgv_imovel_novo
-receita_min = num_imoveis_previstos * 600000
-receita_media = num_imoveis_previstos * vgv_imovel_novo
-receita_max = num_imoveis_previstos * 1200000
+    # Cálculo da receita
+    vgv_por_imovel = vgv_imovel_novo
+    receita_min = num_imoveis_previstos * 600000
+    receita_media = num_imoveis_previstos * vgv_imovel_novo
+    receita_max = num_imoveis_previstos * 1200000
 
-# Média e desvio padrão das vendas
-media_vendas = num_imoveis_previstos
-desvio_padrao_vendas = round(np.std([num_imoveis_previstos * meses[mes] for mes in meses.keys()]))
+    # Média e desvio padrão das vendas
+    media_vendas = num_imoveis_previstos
+    desvio_padrao_vendas = round(np.std([num_imoveis_previstos * meses[mes] for mes in meses.keys()]))
 
-# Gráfico de séries temporais para o número de vendas
-df_vendas = pd.DataFrame({
-    'Mês': list(meses.keys()),
-    'Vendas Mínimas': [max(num_imoveis_previstos * meses[mes] - desvio_padrao_vendas, 0) for mes in meses.keys()],
-    'Vendas Médias': [num_imoveis_previstos * meses[mes] for mes in meses.keys()],
-    'Vendas Máximas': [num_imoveis_previstos * meses[mes] + desvio_padrao_vendas for mes in meses.keys()]
-})
-# Mapear nome do mês para o índice
-meses_idx = {mes: idx for idx, mes in enumerate(meses.keys())}
+    # Gráfico de séries temporais para o número de vendas
+    df_vendas = pd.DataFrame({
+        'Mês': list(meses.keys()),
+        'Vendas Mínimas': [max(num_imoveis_previstos * meses[mes] - desvio_padrao_vendas, 0) for mes in meses.keys()],
+        'Vendas Médias': [num_imoveis_previstos * meses[mes] for mes in meses.keys()],
+        'Vendas Máximas': [num_imoveis_previstos * meses[mes] + desvio_padrao_vendas for mes in meses.keys()]
+    })
+    # Mapear nome do mês para o índice
+    meses_idx = {mes: idx for idx, mes in enumerate(meses.keys())}
 
-# Encontrar o índice do mês atual
-mes_atual_idx = meses_idx[mes_selecionado]
+    # Encontrar o índice do mês atual
+    mes_atual_idx = meses_idx[mes_selecionado]
 
-# Gráfico de séries temporais para o número de vendas
-fig_vendas = go.Figure()
-fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Máximas'], mode='lines+markers', name='Máx', line=dict(color='green', dash='dash')))
-fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Médias'], mode='lines+markers', name='Vendas', line=dict(color='blue')))
-fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Mínimas'], mode='lines+markers', name='Mín', line=dict(color='red', dash='dash')))
-fig_vendas.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
-fig_vendas.update_layout(title='Número de Vendas Previsto por Mês', xaxis_title='Mês', yaxis_title='Número de Vendas')
+    # Gráfico de séries temporais para o número de vendas
+    fig_vendas = go.Figure()
+    fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Máximas'], mode='lines+markers', name='Máx', line=dict(color='green', dash='dash')))
+    fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Médias'], mode='lines+markers', name='Vendas', line=dict(color='blue')))
+    fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Mínimas'], mode='lines+markers', name='Mín', line=dict(color='red', dash='dash')))
+    fig_vendas.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
+    fig_vendas.update_layout(title='Número de Vendas Previsto por Mês', xaxis_title='Mês', yaxis_title='Número de Vendas')
 
-# Cálculo da receita
-receita_min = num_imoveis_previstos * 600000
-receita_max = num_imoveis_previstos * 800000
-receita_media = (receita_min + receita_max) / 2
+    # Cálculo da receita
+    receita_min = num_imoveis_previstos * 600000
+    receita_max = num_imoveis_previstos * 800000
+    receita_media = (receita_min + receita_max) / 2
 
-# Gráfico de séries temporais para a receita
-df_receita = pd.DataFrame({
-    'Mês': list(meses.keys()),
-    'Receita Mínima': [num_imoveis_previstos * meses[mes] * 600000 for mes in meses.keys()],
-    'Receita Média': [((num_imoveis_previstos * meses[mes] * 600000) + (num_imoveis_previstos * meses[mes] * 800000)) / 2 for mes in meses.keys()],
-    'Receita Máxima': [num_imoveis_previstos * meses[mes] * 800000 for mes in meses.keys()]
-})
-
-
-fig_receita = go.Figure()
-fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Máxima'], mode='lines+markers', name='Máx', line=dict(color='green', dash='dash')))
-fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Média'], mode='lines+markers', name='VGV', line=dict(color='blue')))
-fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Mínima'], mode='lines+markers', name='Mín', line=dict(color='red', dash='dash')))
-fig_receita.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
-fig_receita.update_layout(title='VGV Previsto por Mês', xaxis_title='Mês', yaxis_title='Receita (R$)')
+    # Gráfico de séries temporais para a receita
+    df_receita = pd.DataFrame({
+        'Mês': list(meses.keys()),
+        'Receita Mínima': [num_imoveis_previstos * meses[mes] * 600000 for mes in meses.keys()],
+        'Receita Média': [((num_imoveis_previstos * meses[mes] * 600000) + (num_imoveis_previstos * meses[mes] * 800000)) / 2 for mes in meses.keys()],
+        'Receita Máxima': [num_imoveis_previstos * meses[mes] * 800000 for mes in meses.keys()]
+    })
 
 
-# Formatação dos números
-receita_min_formatada = "{:,.2f}".format(receita_min).replace(",", ";").replace(".", ",").replace(";", ".")
-receita_media_formatada = "{:,.2f}".format(receita_media).replace(",", ";").replace(".", ",").replace(";", ".")
-receita_max_formatada = "{:,.2f}".format(receita_max).replace(",", ";").replace(".", ",").replace(";", ".")
-vgv_imovel_novo_formatada = "{:,.2f}".format(vgv_imovel_novo).replace(",", ";").replace(".", ",").replace(";", ".")
+    fig_receita = go.Figure()
+    fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Máxima'], mode='lines+markers', name='Máx', line=dict(color='green', dash='dash')))
+    fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Média'], mode='lines+markers', name='VGV', line=dict(color='blue')))
+    fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Mínima'], mode='lines+markers', name='Mín', line=dict(color='red', dash='dash')))
+    fig_receita.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
+    fig_receita.update_layout(title='VGV Previsto por Mês', xaxis_title='Mês', yaxis_title='Receita (R$)')
 
-# Exibindo os resultados
-st.markdown("---")
-# Calcular a média de leads por corretor
-media_leads_por_corretor = int(num_leads_novos / num_corretores_novos)
-media_imoveis_por_corretor = int(num_imoveis_disponiveis_novos/num_corretores_novos)
 
-# Divisão das colunas em duas linhas
-col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
-col5, col6, col7, col8 = st.columns([1.5, 1.5, 1, 1])
+    # Formatação dos números
+    receita_min_formatada = "{:,.2f}".format(receita_min).replace(",", ";").replace(".", ",").replace(";", ".")
+    receita_media_formatada = "{:,.2f}".format(receita_media).replace(",", ";").replace(".", ",").replace(";", ".")
+    receita_max_formatada = "{:,.2f}".format(receita_max).replace(",", ";").replace(".", ",").replace(";", ".")
+    vgv_imovel_novo_formatada = "{:,.2f}".format(vgv_imovel_novo).replace(",", ";").replace(".", ",").replace(";", ".")
 
-# Preenchendo as colunas com as métricas
-with col1:
-    st.metric("Mês Selecionado", mes_selecionado)
+    # Exibindo os resultados
+    st.markdown("---")
+    # Calcular a média de leads por corretor
+    media_leads_por_corretor = int(num_leads_novos / num_corretores_novos)
+    media_imoveis_por_corretor = int(num_imoveis_disponiveis_novos/num_corretores_novos)
 
-with col2:
-    st.metric("N° de Vendas Previstas", num_imoveis_previstos)
+    # Divisão das colunas em duas linhas
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    col5, col6, col7, col8 = st.columns([1.5, 1.5, 1, 1])
 
-# Exibir o card com a cor definida
-with col3:
-    if 15 <= int(num_leads_novos / num_corretores_novos) <= 20:
-        st.write(f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
-                 f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
-                 '</div>', unsafe_allow_html=True)
-    elif int(num_leads_novos / num_corretores_novos) > 20:
-        st.write(f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
-                 f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
-                 '</div>', unsafe_allow_html=True)
-    else:
-        st.metric("Média de Leads por Corretor", int(num_leads_novos / num_corretores_novos))
+    # Preenchendo as colunas com as métricas
+    with col1:
+        st.metric("Mês Selecionado", mes_selecionado)
 
-with col4:
-    with st.container():
-        if 15 <= int(num_imoveis_disponiveis_novos/num_corretores_novos) <= 20:
-            st.markdown(
-                f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
-                f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
-                '</div>', unsafe_allow_html=True)
-        elif int(num_imoveis_disponiveis_novos/num_corretores_novos) > 20:
-            st.markdown(
-                f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
-                f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
-                '</div>', unsafe_allow_html=True)
+    with col2:
+        st.metric("N° de Vendas Previstas", num_imoveis_previstos)
+
+    # Exibir o card com a cor definida
+    with col3:
+        if 15 <= int(num_leads_novos / num_corretores_novos) <= 20:
+            st.write(f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
+                    f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
+                    '</div>', unsafe_allow_html=True)
+        elif int(num_leads_novos / num_corretores_novos) > 20:
+            st.write(f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
+                    f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
+                    '</div>', unsafe_allow_html=True)
         else:
-            st.metric("Média de Imóveis por Corretor", int(num_imoveis_disponiveis_novos/num_corretores_novos))
+            st.metric("Média de Leads por Corretor", int(num_leads_novos / num_corretores_novos))
 
-# with col4:
-#     st.metric(" Média de Imóveis por Corretor", )
+    with col4:
+        with st.container():
+            if 15 <= int(num_imoveis_disponiveis_novos/num_corretores_novos) <= 20:
+                st.markdown(
+                    f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
+                    f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
+                    '</div>', unsafe_allow_html=True)
+            elif int(num_imoveis_disponiveis_novos/num_corretores_novos) > 20:
+                st.markdown(
+                    f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
+                    f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
+                    '</div>', unsafe_allow_html=True)
+            else:
+                st.metric("Média de Imóveis por Corretor", int(num_imoveis_disponiveis_novos/num_corretores_novos))
 
-# Coluna vazia para separar visualmente
-with col5:
-    st.metric("VGV Previsto", f"R$ {receita_media_formatada}")
-    
+    # with col4:
+    #     st.metric(" Média de Imóveis por Corretor", )
 
-st.markdown("---")
-# Exibindo os gráficos
-col1, col2 = st.columns(2)
-with col1:
-    st.plotly_chart(fig_vendas)
-with col2:
-    st.plotly_chart(fig_receita)
+    # Coluna vazia para separar visualmente
+    with col5:
+        st.metric("VGV Previsto", f"R$ {receita_media_formatada}")
+        
+
+    st.markdown("---")
+    # Exibindo os gráficos
+    col1, col2 = st.columns(2)
+    with col1:
+        st.plotly_chart(fig_vendas)
+    with col2:
+        st.plotly_chart(fig_receita)
+elif opcao_selecionada == 'Vendas':
+    st.sidebar.header('Dados do Grupo')
+    num_corretores_novos = st.sidebar.number_input('Número de Corretores:', min_value=1, step=1, value=20)
+    num_leads_novos = st.sidebar.number_input('Número de Leads:', min_value=1, step=1, value=num_leads, help='Número de leads qualificados com score >= 6')
+
+    st.sidebar.header('Dados de Imóveis')
+    num_imoveis_disponiveis_novos = st.sidebar.number_input('Estoque de Imóveis:', min_value=1, step=1, value=num_imoveis_disponiveis)
+    vgv_imovel_novo = st.sidebar.number_input('VGV Médio por Imóvel (R$):', min_value=0, step=10000, value=vgv_imovel)
+
+    X_novo = pd.DataFrame({
+        'num_corretores': [num_corretores_novos],
+        'num_imoveis_disponiveis': [num_imoveis_disponiveis_novos],
+        'num_leads': [num_leads_novos],
+        'taxa_venda': 0.26,  
+        'vgv_imovel': [vgv_imovel_novo]  
+    })
+    num_imoveis_previstos_novos = model.predict(X_novo)[0]
+    num_imoveis_previstos_novos = int(0.9 * num_corretores_novos + 0.001 * num_imoveis_disponiveis_novos + 0.001 * num_leads_novos + 5 * taxa_venda - 0.000001 * vgv_imovel_novo)+1
+    # Seleção do mês
+    mes_selecionado = st.sidebar.selectbox('Selecione o Mês:', list(meses.keys()))
+
+    # Cálculo do fator de sazonalidade
+    fator_sazonalidade = meses[mes_selecionado]
+
+    # Previsão do número de imóveis vendidos e receita
+    num_imoveis_previstos = int(num_imoveis_previstos_novos * fator_sazonalidade) #int(sum(prever_num_imoveis(valores_imoveis, num_imoveis_disponiveis)) * fator_sazonalidade / 10000)
+
+    # Cálculo da receita
+    vgv_por_imovel = vgv_imovel_novo
+    receita_min = num_imoveis_previstos * 600000
+    receita_media = num_imoveis_previstos * vgv_imovel_novo
+    receita_max = num_imoveis_previstos * 1200000
+
+    # Média e desvio padrão das vendas
+    media_vendas = num_imoveis_previstos
+    desvio_padrao_vendas = round(np.std([num_imoveis_previstos * meses[mes] for mes in meses.keys()]))
+
+    # Gráfico de séries temporais para o número de vendas
+    df_vendas = pd.DataFrame({
+        'Mês': list(meses.keys()),
+        'Vendas Mínimas': [max(num_imoveis_previstos * meses[mes] - desvio_padrao_vendas, 0) for mes in meses.keys()],
+        'Vendas Médias': [num_imoveis_previstos * meses[mes] for mes in meses.keys()],
+        'Vendas Máximas': [num_imoveis_previstos * meses[mes] + desvio_padrao_vendas for mes in meses.keys()]
+    })
+    # Mapear nome do mês para o índice
+    meses_idx = {mes: idx for idx, mes in enumerate(meses.keys())}
+
+    # Encontrar o índice do mês atual
+    mes_atual_idx = meses_idx[mes_selecionado]
+
+    # Gráfico de séries temporais para o número de vendas
+    fig_vendas = go.Figure()
+    fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Máximas'], mode='lines+markers', name='Máx', line=dict(color='green', dash='dash')))
+    fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Médias'], mode='lines+markers', name='Vendas', line=dict(color='blue')))
+    fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Mínimas'], mode='lines+markers', name='Mín', line=dict(color='red', dash='dash')))
+    fig_vendas.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
+    fig_vendas.update_layout(title='Número de Vendas Previsto por Mês', xaxis_title='Mês', yaxis_title='Número de Vendas')
+
+    # Cálculo da receita
+    receita_min = num_imoveis_previstos * 600000
+    receita_max = num_imoveis_previstos * 800000
+    receita_media = (receita_min + receita_max) / 2
+
+    # Gráfico de séries temporais para a receita
+    df_receita = pd.DataFrame({
+        'Mês': list(meses.keys()),
+        'Receita Mínima': [num_imoveis_previstos * meses[mes] * 600000 for mes in meses.keys()],
+        'Receita Média': [((num_imoveis_previstos * meses[mes] * 600000) + (num_imoveis_previstos * meses[mes] * 800000)) / 2 for mes in meses.keys()],
+        'Receita Máxima': [num_imoveis_previstos * meses[mes] * 800000 for mes in meses.keys()]
+    })
+
+
+    fig_receita = go.Figure()
+    fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Máxima'], mode='lines+markers', name='Máx', line=dict(color='green', dash='dash')))
+    fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Média'], mode='lines+markers', name='VGV', line=dict(color='blue')))
+    fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Mínima'], mode='lines+markers', name='Mín', line=dict(color='red', dash='dash')))
+    fig_receita.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
+    fig_receita.update_layout(title='VGV Previsto por Mês', xaxis_title='Mês', yaxis_title='Receita (R$)')
+
+
+    # Formatação dos números
+    receita_min_formatada = "{:,.2f}".format(receita_min).replace(",", ";").replace(".", ",").replace(";", ".")
+    receita_media_formatada = "{:,.2f}".format(receita_media).replace(",", ";").replace(".", ",").replace(";", ".")
+    receita_max_formatada = "{:,.2f}".format(receita_max).replace(",", ";").replace(".", ",").replace(";", ".")
+    vgv_imovel_novo_formatada = "{:,.2f}".format(vgv_imovel_novo).replace(",", ";").replace(".", ",").replace(";", ".")
+
+    # Exibindo os resultados
+    st.markdown("---")
+    # Calcular a média de leads por corretor
+    media_leads_por_corretor = int(num_leads_novos / num_corretores_novos)
+    media_imoveis_por_corretor = int(num_imoveis_disponiveis_novos/num_corretores_novos)
+
+    # Divisão das colunas em duas linhas
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    col5, col6, col7, col8 = st.columns([1.5, 1.5, 1, 1])
+
+    # Preenchendo as colunas com as métricas
+    with col1:
+        st.metric("Mês Selecionado", mes_selecionado)
+
+    with col2:
+        st.metric("N° de Vendas Previstas", num_imoveis_previstos)
+
+    # Exibir o card com a cor definida
+    with col3:
+        if 15 <= int(num_leads_novos / num_corretores_novos) <= 20:
+            st.write(f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
+                    f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
+                    '</div>', unsafe_allow_html=True)
+        elif int(num_leads_novos / num_corretores_novos) > 20:
+            st.write(f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
+                    f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
+                    '</div>', unsafe_allow_html=True)
+        else:
+            st.metric("Média de Leads por Corretor", int(num_leads_novos / num_corretores_novos))
+
+    with col4:
+        with st.container():
+            if 15 <= int(num_imoveis_disponiveis_novos/num_corretores_novos) <= 20:
+                st.markdown(
+                    f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
+                    f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
+                    '</div>', unsafe_allow_html=True)
+            elif int(num_imoveis_disponiveis_novos/num_corretores_novos) > 20:
+                st.markdown(
+                    f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
+                    f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
+                    '</div>', unsafe_allow_html=True)
+            else:
+                st.metric("Média de Imóveis por Corretor", int(num_imoveis_disponiveis_novos/num_corretores_novos))
+
+    # with col4:
+    #     st.metric(" Média de Imóveis por Corretor", )
+
+    # Coluna vazia para separar visualmente
+    with col5:
+        st.metric("VGV Previsto", f"R$ {receita_media_formatada}")
+        
+
+    st.markdown("---")
+    # Exibindo os gráficos
+    col1, col2 = st.columns(2)
+    with col1:
+        st.plotly_chart(fig_vendas)
+    with col2:
+        st.plotly_chart(fig_receita)    
+# elif opcao_selecionada == 'Preços':        
+    # st.sidebar.header('Dados do Grupo')
+    # num_corretores_novos = st.sidebar.number_input('Número de Corretores:', min_value=1, step=1, value=num_corretores)
+    # num_leads_novos = st.sidebar.number_input('Número de Leads:', min_value=1, step=1, value=num_leads, help='Número de leads qualificados com score >= 6')
+
+    # st.sidebar.header('Dados de Imóveis')
+    # num_imoveis_disponiveis_novos = st.sidebar.number_input('Estoque de Imóveis:', min_value=1, step=1, value=num_imoveis_disponiveis)
+    # vgv_imovel_novo = st.sidebar.number_input('VGV Médio por Imóvel (R$):', min_value=0, step=10000, value=vgv_imovel)
+
+    # X_novo = pd.DataFrame({
+    #     'num_corretores': [num_corretores_novos],
+    #     'num_imoveis_disponiveis': [num_imoveis_disponiveis_novos],
+    #     'num_leads': [num_leads_novos],
+    #     'taxa_venda': [taxa_venda],  
+    #     'vgv_imovel': [vgv_imovel_novo]  
+    # })
+    # num_imoveis_previstos_novos = model.predict(X_novo)[0]
+    # num_imoveis_previstos_novos = int(0.9 * num_corretores_novos + 0.001 * num_imoveis_disponiveis_novos + 0.001 * num_leads_novos + 5 * taxa_venda + 0.000001 * vgv_imovel_novo)
+    # # Seleção do mês
+    # mes_selecionado = st.sidebar.selectbox('Selecione o Mês:', list(meses.keys()))
+
+    # # Cálculo do fator de sazonalidade
+    # fator_sazonalidade = meses[mes_selecionado]
+
+    # # Previsão do número de imóveis vendidos e receita
+    # num_imoveis_previstos = int(num_imoveis_previstos_novos * fator_sazonalidade) #int(sum(prever_num_imoveis(valores_imoveis, num_imoveis_disponiveis)) * fator_sazonalidade / 10000)
+
+    # # Cálculo da receita
+    # vgv_por_imovel = vgv_imovel_novo
+    # receita_min = num_imoveis_previstos * 600000
+    # receita_media = num_imoveis_previstos * vgv_imovel_novo
+    # receita_max = num_imoveis_previstos * 1200000
+
+    # # Média e desvio padrão das vendas
+    # media_vendas = num_imoveis_previstos
+    # desvio_padrao_vendas = round(np.std([num_imoveis_previstos * meses[mes] for mes in meses.keys()]))
+
+    # # Gráfico de séries temporais para o número de vendas
+    # df_vendas = pd.DataFrame({
+    #     'Mês': list(meses.keys()),
+    #     'Vendas Mínimas': [max(num_imoveis_previstos * meses[mes] - desvio_padrao_vendas, 0) for mes in meses.keys()],
+    #     'Vendas Médias': [num_imoveis_previstos * meses[mes] for mes in meses.keys()],
+    #     'Vendas Máximas': [num_imoveis_previstos * meses[mes] + desvio_padrao_vendas for mes in meses.keys()]
+    # })
+    # # Mapear nome do mês para o índice
+    # meses_idx = {mes: idx for idx, mes in enumerate(meses.keys())}
+
+    # # Encontrar o índice do mês atual
+    # mes_atual_idx = meses_idx[mes_selecionado]
+
+    # # Gráfico de séries temporais para o número de vendas
+    # fig_vendas = go.Figure()
+    # fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Máximas'], mode='lines+markers', name='Máx', line=dict(color='green', dash='dash')))
+    # fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Médias'], mode='lines+markers', name='Vendas', line=dict(color='blue')))
+    # fig_vendas.add_trace(go.Scatter(x=df_vendas['Mês'], y=df_vendas['Vendas Mínimas'], mode='lines+markers', name='Mín', line=dict(color='red', dash='dash')))
+    # fig_vendas.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
+    # fig_vendas.update_layout(title='Número de Vendas Previsto por Mês', xaxis_title='Mês', yaxis_title='Número de Vendas')
+
+    # # Cálculo da receita
+    # receita_min = num_imoveis_previstos * 600000
+    # receita_max = num_imoveis_previstos * 800000
+    # receita_media = (receita_min + receita_max) / 2
+
+    # # Gráfico de séries temporais para a receita
+    # df_receita = pd.DataFrame({
+    #     'Mês': list(meses.keys()),
+    #     'Receita Mínima': [num_imoveis_previstos * meses[mes] * 600000 for mes in meses.keys()],
+    #     'Receita Média': [((num_imoveis_previstos * meses[mes] * 600000) + (num_imoveis_previstos * meses[mes] * 800000)) / 2 for mes in meses.keys()],
+    #     'Receita Máxima': [num_imoveis_previstos * meses[mes] * 800000 for mes in meses.keys()]
+    # })
+
+
+    # fig_receita = go.Figure()
+    # fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Máxima'], mode='lines+markers', name='Máx', line=dict(color='green', dash='dash')))
+    # fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Média'], mode='lines+markers', name='VGV', line=dict(color='blue')))
+    # fig_receita.add_trace(go.Scatter(x=df_receita['Mês'], y=df_receita['Receita Mínima'], mode='lines+markers', name='Mín', line=dict(color='red', dash='dash')))
+    # fig_receita.add_vline(x=mes_atual_idx, line_dash="dot", line_color="black", annotation_text="Mês Selecionado", annotation_position="top left")
+    # fig_receita.update_layout(title='VGV Previsto por Mês', xaxis_title='Mês', yaxis_title='Receita (R$)')
+
+
+    # # Formatação dos números
+    # receita_min_formatada = "{:,.2f}".format(receita_min).replace(",", ";").replace(".", ",").replace(";", ".")
+    # receita_media_formatada = "{:,.2f}".format(receita_media).replace(",", ";").replace(".", ",").replace(";", ".")
+    # receita_max_formatada = "{:,.2f}".format(receita_max).replace(",", ";").replace(".", ",").replace(";", ".")
+    # vgv_imovel_novo_formatada = "{:,.2f}".format(vgv_imovel_novo).replace(",", ";").replace(".", ",").replace(";", ".")
+
+    # # Exibindo os resultados
+    # st.markdown("---")
+    # # Calcular a média de leads por corretor
+    # media_leads_por_corretor = int(num_leads_novos / num_corretores_novos)
+    # media_imoveis_por_corretor = int(num_imoveis_disponiveis_novos/num_corretores_novos)
+
+    # # Divisão das colunas em duas linhas
+    # col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    # col5, col6, col7, col8 = st.columns([1.5, 1.5, 1, 1])
+
+    # # Preenchendo as colunas com as métricas
+    # with col1:
+    #     st.metric("Mês Selecionado", mes_selecionado)
+
+    # with col2:
+    #     st.metric("N° de Vendas Previstas", num_imoveis_previstos)
+
+    # # Exibir o card com a cor definida
+    # with col3:
+    #     if 15 <= int(num_leads_novos / num_corretores_novos) <= 20:
+    #         st.write(f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
+    #                 f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
+    #                 '</div>', unsafe_allow_html=True)
+    #     elif int(num_leads_novos / num_corretores_novos) > 20:
+    #         st.write(f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
+    #                 f'Média de Leads por Corretor: {int(num_leads_novos / num_corretores_novos)}'
+    #                 '</div>', unsafe_allow_html=True)
+    #     else:
+    #         st.metric("Média de Leads por Corretor", int(num_leads_novos / num_corretores_novos))
+
+    # with col4:
+    #     with st.container():
+    #         if 15 <= int(num_imoveis_disponiveis_novos/num_corretores_novos) <= 20:
+    #             st.markdown(
+    #                 f'<div style="background-color:yellow; padding: 10px; border-radius: 5px;">'
+    #                 f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
+    #                 '</div>', unsafe_allow_html=True)
+    #         elif int(num_imoveis_disponiveis_novos/num_corretores_novos) > 20:
+    #             st.markdown(
+    #                 f'<div style="background-color:red; padding: 10px; border-radius: 5px;">'
+    #                 f'Média de Imóveis por Corretor: {int(num_imoveis_disponiveis_novos/num_corretores_novos)}'
+    #                 '</div>', unsafe_allow_html=True)
+    #         else:
+    #             st.metric("Média de Imóveis por Corretor", int(num_imoveis_disponiveis_novos/num_corretores_novos))
+
+    # # with col4:
+    # #     st.metric(" Média de Imóveis por Corretor", )
+
+    # # Coluna vazia para separar visualmente
+    # with col5:
+    #     st.metric("VGV Previsto", f"R$ {receita_media_formatada}")
+        
+
+    # st.markdown("---")
+    # # Exibindo os gráficos
+    # col1, col2 = st.columns(2)
+    # with col1:
+    #     st.plotly_chart(fig_vendas)
+    # with col2:
+    #     st.plotly_chart(fig_receita)
