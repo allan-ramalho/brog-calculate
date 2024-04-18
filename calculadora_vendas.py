@@ -6,6 +6,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import numpy as np
+from streamlit_lottie import st_lottie
+import requests
 
 
 # Configurações iniciais do Streamlit
@@ -70,10 +72,10 @@ meses = {
 }
 
 # Interface da calculadora
-st.sidebar.header('Vertical de Negócios')
-opcoes = ["Lançamentos", "Vendas", "Preços"]
-opcao_selecionada  = st.sidebar.radio("Modelos", opcoes)
-if opcao_selecionada == 'Lançamentos':
+st.sidebar.header('Inferências')
+opcoes = ["Lançamentos - Estimativa de Negócios", "Vendas - Estimativa de Negócios", "Estimativa de Preços"]
+opcao_selecionada  = st.sidebar.radio("", opcoes)
+if opcao_selecionada == "Lançamentos - Estimativa de Negócios":
     st.sidebar.header('Dados do Grupo')
     num_corretores_novos = st.sidebar.number_input('Número de Corretores:', min_value=1, step=1, value=10)
     num_leads_novos = st.sidebar.number_input('Número de Leads:', min_value=1, step=1, value=num_leads, help='Número de leads qualificados com score >= 6')
@@ -90,7 +92,8 @@ if opcao_selecionada == 'Lançamentos':
         'vgv_imovel': [vgv_imovel_novo]  
     })
     num_imoveis_previstos_novos = model.predict(X_novo)[0]
-    num_imoveis_previstos_novos = int(0.9 * num_corretores_novos + 0.001 * num_imoveis_disponiveis_novos + 0.001 * num_leads_novos + 5 * taxa_venda - 0.000001 * vgv_imovel_novo)+1
+    num_imoveis_previstos_novos = int(0.02 * num_corretores_novos + 0.03 * num_imoveis_disponiveis_novos + 0.002 * num_leads_novos + ((500 * taxa_venda)/(0.00000365*vgv_imovel_novo)) - 0.000009 * vgv_imovel_novo)
+    # num_imoveis_previstos_novos = int(0.9 * num_corretores_novos + 0.001 * num_imoveis_disponiveis_novos + 0.001 * num_leads_novos + 5 * taxa_venda - 0.000001 * vgv_imovel_novo)+1
     # Seleção do mês
     mes_selecionado = st.sidebar.selectbox('Selecione o Mês:', list(meses.keys()))
 
@@ -219,7 +222,7 @@ if opcao_selecionada == 'Lançamentos':
         st.plotly_chart(fig_vendas)
     with col2:
         st.plotly_chart(fig_receita)
-elif opcao_selecionada == 'Vendas':
+elif opcao_selecionada == "Vendas - Estimativa de Negócios":
     st.sidebar.header('Dados do Grupo')
     num_corretores_novos = st.sidebar.number_input('Número de Corretores:', min_value=1, step=1, value=20)
     num_leads_novos = st.sidebar.number_input('Número de Leads:', min_value=1, step=1, value=num_leads, help='Número de leads qualificados com score >= 6')
@@ -236,7 +239,7 @@ elif opcao_selecionada == 'Vendas':
         'vgv_imovel': [vgv_imovel_novo]  
     })
     num_imoveis_previstos_novos = model.predict(X_novo)[0]
-    num_imoveis_previstos_novos = int(0.9 * num_corretores_novos + 0.001 * num_imoveis_disponiveis_novos + 0.001 * num_leads_novos + 5 * taxa_venda - 0.000001 * vgv_imovel_novo)+1
+    num_imoveis_previstos_novos = int(0.02 * num_corretores_novos + 0.1 * num_imoveis_disponiveis_novos + 0.002 * num_leads_novos + ((500 * 0.26)/(0.00000365*vgv_imovel_novo)) - 0.000009 * vgv_imovel_novo)
     # Seleção do mês
     mes_selecionado = st.sidebar.selectbox('Selecione o Mês:', list(meses.keys()))
 
@@ -365,7 +368,23 @@ elif opcao_selecionada == 'Vendas':
         st.plotly_chart(fig_vendas)
     with col2:
         st.plotly_chart(fig_receita)    
-# elif opcao_selecionada == 'Preços':        
+elif opcao_selecionada == "Estimativa de Preços": 
+    def render_animation():
+            animation_response = requests.get('https://lottie.host/cf3926dd-efbd-4508-9cb8-8a319e172be1/UJWBc11teF.json')
+            animation_json = dict()
+            
+            if animation_response.status_code == 200:
+                animation_json = animation_response.json()
+            else:
+                print("Error in the URL")     
+                                
+            return st_lottie(animation_json, height=200, width=300)
+        
+    render_animation()
+    
+
+    
+    
     # st.sidebar.header('Dados do Grupo')
     # num_corretores_novos = st.sidebar.number_input('Número de Corretores:', min_value=1, step=1, value=num_corretores)
     # num_leads_novos = st.sidebar.number_input('Número de Leads:', min_value=1, step=1, value=num_leads, help='Número de leads qualificados com score >= 6')
