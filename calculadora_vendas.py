@@ -398,9 +398,9 @@ elif opcao_selecionada == "Estimativa de Preços":
     area_privativa = st.sidebar.number_input('M² do Imóvel ', min_value=1, step=1, value=75)
     closet = st.sidebar.radio('Tem Closet?', ['Sim', 'Não'])
     if closet == 'Não':
-        closet = 1
-    elif closet == 'Sim':
         closet = 0
+    elif closet == 'Sim':
+        closet = 1
     dormitorios = st.sidebar.number_input('N° de Dormitórios', min_value=1, step=1, value=4)
     elevadores = st.sidebar.number_input('N° de Elevadores', min_value=1, step=1, value=4)
     estado_conservacao_imovel = st.sidebar.radio('Estado de Conservação', ['Ótimo', 'Bom', 'Regular'])
