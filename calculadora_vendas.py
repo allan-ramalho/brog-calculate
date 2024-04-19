@@ -398,16 +398,16 @@ elif opcao_selecionada == "Estimativa de Preços":
     area_privativa = st.sidebar.number_input('M² do Imóvel ', min_value=1, step=1, value=75)
     closet = st.sidebar.radio('Tem Closet?', ['Sim', 'Não'])
     if closet == 'Não':
-        closet = 0
-    elif closet == 'Sim':
         closet = 1
+    elif closet == 'Sim':
+        closet = 0
     dormitorios = st.sidebar.number_input('N° de Dormitórios', min_value=1, step=1, value=4)
     elevadores = st.sidebar.number_input('N° de Elevadores', min_value=1, step=1, value=4)
     estado_conservacao_imovel = st.sidebar.radio('Estado de Conservação', ['Ótimo', 'Bom', 'Regular'])
     if estado_conservacao_imovel == 'Ótimo':
-        estado_conservacao_imovel = 5
+        estado_conservacao_imovel = 7
     elif estado_conservacao_imovel == 'Bom':
-        estado_conservacao_imovel = 2
+        estado_conservacao_imovel = 3
     elif estado_conservacao_imovel == 'Regular':
         estado_conservacao_imovel = 0
     midia= st.sidebar.radio('Possui mídias?', ['Sim', 'Não'], help="Fotos e/ou vídeos")
@@ -423,7 +423,7 @@ elif opcao_selecionada == "Estimativa de Preços":
         qtd_varandas = st.sidebar.number_input('N° de Varandas', min_value=1, step=1, value=2)
     valor_condominio = st.sidebar.number_input('Valor de Condomínio', min_value=1, step=1, value=500)
     
-    valor = (133245.29266838823 + (-64202.367576423654)*aceita_financiamento + (9168.233870946971)*andar_do_apto + (-8118.868950091412)*andares + (-10565.819973089086)*aptos_andar + (9000.79555321114747)*area_privativa + (105282.37547005518)*closet  + (58148.066619422105)*dormitorios + (7377.984906381084)*elevadores + (24310.316293653992)*estado_conservacao_imovel + (46888.68729398165)*midia + (13156.21440522932)*percentual_comissao + (154144.585405557)*qtd_varandas + (300)*valor_condominio )*0.7
+    valor = (133245.29266838823 + (-64202.367576423654)*aceita_financiamento + (9168.233870946971)*andar_do_apto + (-8118.868950091412)*andares + (-10565.819973089086)*aptos_andar + (9000.79555321114747)*area_privativa + (105282.37547005518)*closet  + (58148.066619422105)*dormitorios + (7377.984906381084)*elevadores + (24310.316293653992)*estado_conservacao_imovel + (46888.68729398165)*midia + (13156.21440522932)*percentual_comissao + (154144.585405557)*qtd_varandas + (300)*valor_condominio )*0.8
 
     # Seleção do mês
     # mes_selecionado = st.sidebar.selectbox('Selecione o Mês:', list(meses.keys()))
