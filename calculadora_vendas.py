@@ -389,9 +389,9 @@ elif opcao_selecionada == "Estimativa de Preços":
   
     aceita_financiamento = st.sidebar.radio('Aceita Financiamento?', ['Sim', 'Não'])
     if aceita_financiamento == 'Não':
-        aceita_financiamento = 0
-    elif aceita_financiamento == 'Sim':
         aceita_financiamento = 1
+    elif aceita_financiamento == 'Sim':
+        aceita_financiamento = 0
     andares = st.sidebar.number_input('N° de Andares do Edifício ', min_value=1, step=1, value=10)
     andar_do_apto = st.sidebar.number_input('N° do Andar ', min_value=1, step=1, value=3)
     aptos_andar = st.sidebar.number_input('N° de Apartamentos por Andar ', min_value=1, step=1, value=5)
